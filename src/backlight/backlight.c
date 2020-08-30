@@ -286,6 +286,10 @@ static int clamp_brightness(sd_device *device, char **value, unsigned max_bright
         if (new_brightness != brightness) {
                 char *new_value;
 
+                if(brightness > max_brightness) {
+                        new_brightness = brightness / 0x101;
+                }
+
                 r = asprintf(&new_value, "%u", new_brightness);
                 if (r < 0)
                         return log_oom();
@@ -468,7 +472,12 @@ static int run(int argc, char *argv[]) {
                 if (r < 0)
                         return log_device_error_errno(device, r, "Failed to read current brightness: %m");
 
-                r = write_string_file(saved, value, WRITE_STRING_FILE_CREATE);
+                unsigned val = atoi(value);
+                if(val > max_brightness)
+                        val = val / 0x101;
+                char c[10];
+                sprintf(c, "%d", val);
+                r = write_string_file(saved, c, WRITE_STRING_FILE_CREATE);
                 if (r < 0)
                         return log_device_error_errno(device, r, "Failed to write %s: %m", saved);
 
